@@ -1,0 +1,26 @@
+This is the RasPlay todo list:
+
+- Detect the sound device instead of using hard coded ALSA ID's.
+  Right not it will probably only work with my USB sound DSP.
+
+- Create routines to parse an MPD playlist or create our own 
+  playlist system.  Some Radio stations change the playlist title
+  when playing to the song name. This then makes it hard to 
+  display the station ID when changing channels.
+
+- Faster switching in and out of airplay mode.
+
+- More changes to use both lines of the display.  Scroll mode
+  also needs some adjusting.
+
+- Display station instead of song when changing channels. (See
+  second note above).
+
+- Add a way to load or dynamically pull playlists or add in 
+  Internet Radio stations.
+
+- Track down BUG that leaves display in unknown state when exiting
+  daemon.  Strange characters on the display and usually reqires
+  a power cycle. Intermitent.
+    
+    
