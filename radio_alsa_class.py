@@ -21,7 +21,7 @@ from log_class import Log
 from translate_class import Translate
 
 # System files
-RadioLibDir = "/var/lib/radiod"
+RadioLibDir = "/var/lib/rasplay"
 CurrentStationFile = RadioLibDir + "/current_station"
 CurrentTrackFile = RadioLibDir + "/current_track"
 VolumeFile = RadioLibDir + "/volume"
@@ -122,6 +122,7 @@ class Radio:
 	# Start the MPD daemon
 	def start(self):
 		# Start the player daemon
+		log.message("Restarting MPD: service mpd restart", log.DEBUG)
 		self.execCommand("service mpd restart")
 		time.sleep(2)
 		self.execMpcCommand("clear")
@@ -132,8 +133,10 @@ class Radio:
 		self.repeatOff()
 		self.getStoredID(self.current_file)
 		self.execMpcCommand("play " + str(self.current_id))
+		log.message("MPD Playing", log.DEBUG)
 		self.volume = self.getStoredVolume()
 		self.setVolume(self.volume)
+		log.message("Volume is now SET",log.DEBUG)
 		return
 
 	# Input Source RADIO, NETWORK or PLAYER
@@ -173,7 +176,7 @@ class Radio:
 		return self.volume
 
 	def setVolume(self,volume):
-		if self.soundMuted: 
+		if self.soundMuted:
 			self.unmute()
 		else:
 			self.volume = volume
@@ -203,18 +206,17 @@ class Radio:
 
 	# Mute sound functions (Also stops MPD)
 	def mute(self):
+		log.message("mute: soundMuted=" + str(self.soundMuted), log.DEBUG)
 		self.execCommand("amixer cset numid=" + str(self.switchid) + " off" )
-		self.pause()
 		self.soundMuted = True
 		return
 
 	def unmute(self):
 		log.message("unmute soundMuted=" + str(self.soundMuted), log.DEBUG)
 		if self.soundMuted:
-			self.unpause()
 			self.execCommand("amixer cset numid=" + str(self.switchid) + " on" )
-			self.setVolume(self.volume)
 			self.soundMuted = False
+			self.setVolume(self.volume)
 		return
 
 	def muted(self):
@@ -396,7 +398,7 @@ class Radio:
 		
 		self.search_index = self.current_id - 1
 		self.execCommand ("echo " + str(self.current_id) + " > " + self.current_file)
-		self.execCommand("/usr/bin/mpc status > /var/lib/radiod/status")
+		self.execCommand("/usr/bin/mpc status > /var/lib/rasplay/status")
 		name = self.getCurrentName()
 		log.message("(" + str(self.current_id) + ") " + name, log.INFO)
 		return
@@ -433,7 +435,7 @@ class Radio:
 		currentArtist = translate.escape(currentArtist)
 		return currentArtist
 
-	# Get the last ID stored in /var/lib/radiod
+	# Get the last ID stored in /var/lib/rasplay
 	def getStoredID(self,current_file):
 		if os.path.isfile(self.current_file):
 			current_id = 1

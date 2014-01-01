@@ -25,7 +25,7 @@ class Log:
 	ERROR = logging.ERROR
 	DEBUG = logging.DEBUG
 
-	RadioLibDir = "/var/lib/radiod"
+	RadioLibDir = "/var/lib/rasplay"
 	LogLevelFile = RadioLibDir + "/loglevel"
 
 	module = ''

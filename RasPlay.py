@@ -28,10 +28,6 @@ from time import strftime
 
 # Class imports
 from radio_daemon import Daemon
-# Uncomment one or the other of these but not both
-# Radio_class is setup to use the volume from MPD
-#from radio_class import Radio
-# Radio_alsa_class is setup to use the ALSA volume controls
 from radio_alsa_class import Radio
 from log_class import Log
 
@@ -52,8 +48,8 @@ REPEAT = 2
 RELOADLIB = 3
 OPTION_LAST = RELOADLIB
 
-CurrentStationFile = "/var/lib/radiod/current_station"
-CurrentTrackFile = "/var/lib/radiod/current_track"
+CurrentStationFile = "/var/lib/rasplay/current_station"
+CurrentTrackFile = "/var/lib/rasplay/current_track"
 CurrentFile = CurrentStationFile
 
 log = Log()
@@ -62,8 +58,10 @@ lcd = Adafruit_lcd()
 
 # Register exit routine
 def finish():
-        lcd.clear()
-        lcd.line1("Radio stopped")
+	lcd.clear()
+	radio.pause()
+	lcd.line1("Bohica RasPlay")
+	lcd.line2("Radio stopped")
 
 atexit.register(finish)
 
@@ -83,23 +81,28 @@ class MyDaemon(Daemon):
 		log.message(myos, log.INFO)
 
 		# Display daemon pid on the LCD
+		radio.mute()
+		lcd.line1("Bohica RasPlay")
 		message = "Radio pid " + str(os.getpid())
-		lcd.line1(message)
+		lcd.line2(message)
+		time.sleep(2)
 		lcd.line2(ipstring)
 		time.sleep(4)
 		log.message("Restarting MPD", log.INFO)
-		lcd.line2("Starting MPD")
-		radio.start()
-		log.message("MPD started", log.INFO)
-
-		mpd_version = radio.execMpcCommand("version")
-		log.message(mpd_version, log.INFO)
-		lcd.scroll2(mpd_version,no_interrupt)
-		time.sleep(1)
+		lcd.line2("MPD Starting")
 		
-		reload(lcd,radio)
-		radio.play(get_stored_id(CurrentFile))
-		log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
+		radio.start()
+		
+		log.message("MPD started", log.INFO)
+		lcd.line2("MPD Started ")
+
+		# reload(lcd,radio)
+		
+		# radio.play(get_stored_id(CurrentFile))
+		# log.message("Current ID = " + str(radio.getCurrentID()), log.INFO)
+		# volume = radio.getStoredVolume()
+		# log.message("Setting Inital Volume to: " + str(volume))
+		# radio.setVolume(volume)
 
 		# Main processing loop
 		display_mode = radio.getDisplayMode()
@@ -177,11 +180,11 @@ class MyDaemon(Daemon):
 			pid = None
 
 		if not pid:
-			message = "radiod status: not running"
+			message = "rasplay status: not running"
 			log.message(message, log.INFO)
 			print message 
 		else:
-			message = "radiod running pid " + str(pid)
+			message = "rasplay running pid " + str(pid)
 			log.message(message, log.INFO)
 			print message 
 		return
@@ -515,8 +518,8 @@ def mount_usb(lcd):
 
 # Mount any remote network drive
 def mount_share():
-	if os.path.exists("/var/lib/radiod/share"):
-		myshare = exec_cmd("cat /var/lib/radiod/share")
+	if os.path.exists("/var/lib/rasplay/share"):
+		myshare = exec_cmd("cat /var/lib/rasplay/share")
 		if myshare[:1] != '#':
 			exec_cmd(myshare)
 			log.message(myshare,log.DEBUG)
@@ -553,7 +556,7 @@ def get_current_id():
 	exec_cmd ("echo " + str(current_id) + " > " + CurrentFile)
 	return current_id
 
-# Get the last ID stored in /var/lib/radiod
+# Get the last ID stored in /var/lib/rasplay
 def get_stored_id(current_file):
 	current_id = 5
 	if os.path.isfile(current_file):
@@ -718,11 +721,13 @@ def display_options(lcd,radio):
 
 ### Main routine ###
 if __name__ == "__main__":
-	daemon = MyDaemon('/var/run/radiod.pid')
+	daemon = MyDaemon('/var/run/rasplay.pid')
 	if len(sys.argv) == 2:
 		if 'start' == sys.argv[1]:
 			daemon.start()
 		elif 'stop' == sys.argv[1]:
+			radio.pause()
+			time.sleep(1)
 			os.system("service mpd stop")
 			daemon.stop()
 		elif 'restart' == sys.argv[1]:
